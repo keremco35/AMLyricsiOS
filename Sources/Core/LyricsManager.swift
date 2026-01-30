@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import MusicKit
 
 struct LyricLine: Identifiable, Codable {
     let id = UUID()
@@ -39,7 +40,7 @@ class LyricsManager: ObservableObject {
         // Simple regex-based parser
         // [mm:ss.xx] Text
         var lines: [LyricLine] = []
-        let regex = try! NSRegularExpression(pattern: "\[(\d{2}):(\d{2}\.\d{2})\](.*)")
+        let regex = try! NSRegularExpression(pattern: #"\[(\d{2}):(\d{2}\.\d{2})\](.*)"#)
         
         let stringLines = lrc.components(separatedBy: .newlines)
         
@@ -60,9 +61,11 @@ class LyricsManager: ObservableObject {
         }
         
         // Fix end times
-        for i in 0..<lines.count - 1 {
-            let nextStart = lines[i+1].startTime
-            lines[i] = LyricLine(text: lines[i].text, startTime: lines[i].startTime, endTime: nextStart)
+        if lines.count >= 2 {
+            for i in 0..<(lines.count - 1) {
+                let nextStart = lines[i + 1].startTime
+                lines[i] = LyricLine(text: lines[i].text, startTime: lines[i].startTime, endTime: nextStart)
+            }
         }
         
         return lines
