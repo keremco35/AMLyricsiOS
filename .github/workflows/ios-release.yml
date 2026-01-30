@@ -1,0 +1,59 @@
+name: iOS Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-and-release:
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: Install XcodeGen
+        run: brew install xcodegen
+        
+      - name: Hydrate Assets (Size Inflation)
+        run: |
+          chmod +x Scripts/setup_assets.sh
+          ./Scripts/setup_assets.sh
+          
+      - name: Generate Xcode Project
+        run: xcodegen generate
+        
+      - name: Build Archive
+        run: |
+          xcodebuild -scheme AMLyrics \
+            -destination "generic/platform=iOS" \
+            -archivePath AMLyrics.xcarchive \
+            archive \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+            
+      - name: Export IPA (Unsigned)
+        run: |
+          mkdir Payload
+          cp -r AMLyrics.xcarchive/Products/Applications/AMLyrics.app Payload/
+          zip -r AMLyrics.ipa Payload
+          
+      - name: Verify Size requirement (>= 100MB)
+        run: |
+          filesize=$(stat -f%z "AMLyrics.ipa")
+          echo "IPA Size: $filesize bytes"
+          if [ $filesize -lt 104857600 ]; then
+            echo "❌ Error: IPA size is less than 100MB ($filesize bytes). Size inflation failed."
+            exit 1
+          else
+            echo "✅ IPA Size check passed!"
+          fi
+          
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: AMLyrics.ipa
+          generate_release_notes: true
