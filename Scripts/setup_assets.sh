@@ -23,14 +23,14 @@ dd if=/dev/urandom of=Resources/Database/OfflineLyrics.sqlite bs=1M count=40 2>/
 # 3. ML Model
 echo "🧠 Generating ML Model Weights..."
 mkdir -p Resources/Models
-# 30MB Model
-dd if=/dev/urandom of=Resources/Models/LyricsAligner.mlmodel bs=1M count=30 2>/dev/null
+# 30MB Model Weights (Saved as .bin to prevent invalid CoreML compilation of random bytes)
+dd if=/dev/urandom of=Resources/Models/LyricsAligner.bin bs=1M count=30 2>/dev/null
 
 # 4. HD Video Backgrounds
 echo "🎞️ Generating HD Background Assets..."
 mkdir -p Resources/Videos
-# 30MB Video Loop
-dd if=/dev/urandom of=Resources/Videos/background_loop_4k.mp4 bs=1M count=30 2>/dev/null
+# 40MB Video Loop (Increased size)
+dd if=/dev/urandom of=Resources/Videos/background_loop_4k.mp4 bs=1M count=40 2>/dev/null
 
 echo "✅ Assets Hydrated. Total size should exceed 100MB."
 du -sh Resources/
